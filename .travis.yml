@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t ritaali/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ritaali/react-test npm test
+
+after_success:
+  - docker build -t ritaali/multi-client ./client
+  - docker build -t ritaali/multi-nginx ./nginx
+  - docker build -t ritaali/multi-server ./server
+  - docker build -t ritaali/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push ritaali/multi-client
+  - docker push ritaali/multi-nginx
+  - docker push ritaali/multi-server
+  - docker push ritaali/multi-worker
